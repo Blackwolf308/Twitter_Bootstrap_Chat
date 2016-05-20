@@ -1,0 +1,161 @@
+<!doctype html>
+<html>
+
+  <head>
+      <script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
+      <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+      <link rel="stylesheet" href="http://bootswatch.com/darkly/bootstrap.min.css">
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
+      <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+      <style>
+          #messagesDiv {
+              height: 75vh;
+              overflow: auto;
+          }
+          .nav {
+            padding: 0 10% 0 10%;
+          }
+          .chat-window {
+            margin: 2%;
+            padding: 0 10% 0 10%;
+          }
+          article{
+            padding: 1%;
+          }
+          .media-content{
+            margin-top: 1%;
+          }
+          figure{
+            margin-top: 1%;
+          }
+          .navbar-header {
+            margin-top: 20px;
+            color: white;
+          }
+          .nav {
+            float:right;
+          }
+          .fa {
+            color: #0ce3ac;
+          }
+      </style>
+  </head>
+  <!-- <span class="icon">
+    <i class="fa fa-twitter"></i> &nbsp;
+  </span> Twitter Chat
+
+  <span class="icon">
+    <i class="fa fa-sign-out"></i>
+  </span>
+
+<a class="button" id="logout" href="index.html"></a>
+-->
+  <body>
+
+
+    <div class="hero is-primary">
+      <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <span class="icon">
+          <i class="fa fa-twitter"></i> &nbsp;
+        </span> Twitter Chat
+      </div>
+
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav navbar-right">
+          <li>
+            <a id="logout" href="index.html">logout</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+    </div>
+      <div class="chat-window">
+        <div id="messagesDiv"></div>
+        <div>
+          <p class="control has-addons">
+            <div class="form-group">
+              <label class="control-label"></label>
+              <div class="input-group">
+                <input class="form-control" id='messageInput' type="text" placeholder="Send Your Message">
+                <span class="input-group-btn">
+                  <button id="sendButton"class="btn btn-primary" type="button">Send</button>
+                </span>
+              </div>
+            </div>
+          </p>
+        </div>
+      </div>
+      <script type="text/javascript">
+      const ref = new Firebase('https://chat-app308.firebaseio.com/')
+
+
+
+      if (!localStorage.getItem('auth')) {
+        window.location.replace("index.html")
+      }
+
+      $('#logout').click(function() {
+        localStorage.clear()
+      })
+
+// this line make the "welcome (addnamehere)" part in the center of the navbar
+      const { displayName, profileImageURL, username } = JSON.parse(localStorage.getItem('auth'))
+      $("#username").text("Welcome " + displayName)
+
+      //RECEIVE INPUT
+      $('#messageInput').keypress(function(e) {
+          if (e.keyCode == 13 ) sendMsg()
+      });
+
+      $('#sendButton').click(sendMsg)
+
+      function sendMsg() {
+
+        const message = $('#messageInput').val();
+        ref.push({ message, displayName, profileImageURL, username });
+        $('#messageInput').val(" ");
+      }
+
+      // Get data from FB(firebase)
+      ref.on('child_added', function(snapshot) {
+        const {message, displayName, profileImageURL, username} = snapshot.val()
+        const encodedMessage = encodeURIComponent(message)
+        const url = `https://twitter.com/intent/tweet?text=${encodedMessage}`
+        displayChatMessage(message, profileImageURL, displayName, username, url);
+      })
+      function displayChatMessage(message, img, displayName, username, url) {
+        const date = new Date()
+        const minutes = date.getMinutes()
+        const hours = date.getHours()
+        $('<article class="well well-lg" style="margin:20px"/>').html(
+          `<figure class="media-left">
+          <p>
+            <img width='54px' src=${img}/>
+          </p>
+        </figure>
+        <div class="media-content">
+          <div class="content">
+            <p>
+              <strong>${displayName}</strong> <small>@${username}</small> <small>${(hours+ 24) % 12 || 12}:${minutes}</small>
+              <br>
+              ${message}
+            </p>
+          </div>
+          <nav class="level">
+            <div class="level-left">
+              <a class="level-item" href=${url}>
+                <span class="icon is-small"><i class="fa fa-retweet"></i></span>
+              </a>
+            </div>
+          </nav>
+        </div>
+      </article>`).appendTo($('#messagesDiv'))
+      $('#messagesDiv')[0].scrollTop = $('#messagesDiv')[0].scrollHeight;
+      }
+      </script>
+  </body>
+
+</html>
